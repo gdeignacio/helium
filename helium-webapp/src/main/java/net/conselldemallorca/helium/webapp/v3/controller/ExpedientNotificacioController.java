@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.support.ByteArrayMultipartFileEditor;
 
 import net.conselldemallorca.helium.v3.core.api.dto.ArxiuDto;
+import net.conselldemallorca.helium.v3.core.api.dto.DocumentNotificacioTipusEnumDto;
 import net.conselldemallorca.helium.v3.core.api.dto.ExpedientDto;
 import net.conselldemallorca.helium.v3.core.api.dto.NotificacioDto;
 import net.conselldemallorca.helium.v3.core.api.exception.SistemaExternException;
@@ -54,10 +55,12 @@ public class ExpedientNotificacioController extends BaseExpedientController {
 			@PathVariable Long expedientId,
 			Model model) {		
 		ExpedientDto expedient = expedientService.findAmbId(expedientId);
-		List<NotificacioDto> notificacions = expedientService.findNotificacionsPerExpedientId(expedient.getId());
+		List<NotificacioDto> notificacionsSistra = expedientService.findNotificacionsPerExpedientId(expedient.getId(), DocumentNotificacioTipusEnumDto.ELECTRONICA);
+		List<NotificacioDto> notificacionsSicer = expedientService.findNotificacionsPerExpedientId(expedient.getId(), DocumentNotificacioTipusEnumDto.SICER);
 		
 		model.addAttribute("expedient",expedient);
-		model.addAttribute("notificacions",notificacions);
+		model.addAttribute("notificacionsSistra",notificacionsSistra);
+		model.addAttribute("notificacionsSicer",notificacionsSicer);
 		
 		return "v3/expedientNotificacio";
 	}

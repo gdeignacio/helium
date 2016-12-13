@@ -416,6 +416,42 @@ public class ExpedientTipusServiceImpl implements ExpedientTipusService {
 				expedientTipusRepository.save(entity),
 				ExpedientTipusDto.class);	
 	}	
+	
+	@Override
+	@Transactional
+	public ExpedientTipusDto updateIntegracioSicer(
+			Long entornId, 
+			Long expedientTipusId, 
+			ExpedientTipusDto command) {
+		logger.debug(
+				"Modificant tipus d'expedient amb dades d'integracio amb SICER (" +
+				"entornId=" + entornId + ", " +
+				"expedientTipus=" + expedientTipusId + ")");
+		Entorn entorn = entornHelper.getEntornComprovantPermisos(
+				entornId,
+				true);
+		expedientTipusHelper.comprovarPermisDissenyEntornITipusExpedient(
+				entornId,
+				expedientTipusId);
+		ExpedientTipus entity = expedientTipusRepository.findByEntornAndId(
+				entorn,
+				expedientTipusId);
+		
+		entity.setSicerIntegracioActiva(command.isSicerIntegracioActiva());
+		entity.setSicerProducteCodi(command.getSicerProducteCodi());
+		entity.setSicerClientCodi(command.getSicerClientCodi());
+		entity.setSicerPuntAdmissioCodi(command.getSicerPuntAdmissioCodi());
+		entity.setSicerNomLlinatges(command.getSicerNomLlinatges());
+		entity.setSicerDireccio(command.getSicerDireccio());
+		entity.setSicerPoblacio(command.getSicerPoblacio());
+		entity.setSicerCodiPostal(command.getSicerCodiPostal());
+		entity.setSicerSftpUser(command.getSicerSftpUser());
+		entity.setSicerSftpPassword(command.getSicerSftpPassword());
+		
+		return conversioTipusHelper.convertir(
+				expedientTipusRepository.save(entity),
+				ExpedientTipusDto.class);	
+	}
 
 	/**
 	 * {@inheritDoc}

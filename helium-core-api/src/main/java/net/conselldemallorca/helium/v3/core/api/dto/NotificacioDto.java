@@ -22,6 +22,7 @@ public class NotificacioDto implements Serializable {
 	private DocumentEnviamentEstatEnumDto estat;
 	private String assumpte;
 	private Date dataEnviament;
+	private Date dataCreacio;
 	private String observacions;
 	
 	private DocumentNotificacioTipusEnumDto tipus;
@@ -100,6 +101,13 @@ public class NotificacioDto implements Serializable {
 
 	public void setDataEnviament(Date dataEnviament) {
 		this.dataEnviament = dataEnviament;
+	}
+	
+	public Date getDataCreacio() {
+		return dataCreacio;
+	}
+	public void setDataCreacio(Date dataCreacio) {
+		this.dataCreacio = dataCreacio;
 	}
 
 	public String getObservacions() {

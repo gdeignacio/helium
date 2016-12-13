@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -868,6 +869,10 @@ public class ExecucioMassivaServiceImpl implements ExecucioMassivaService {
 				mesuresTemporalsHelper.mesuraIniciar("desfer fi process instance", "massiva", expedient_s);
 				reprendreExpedient(ome);
 				mesuresTemporalsHelper.mesuraCalcular("desfer fi process instance", "massiva", expedient_s);
+			} else if (tipus == ExecucioMassivaTipus.NOTIFICACIO_SICER){
+				mesuresTemporalsHelper.mesuraIniciar("desfer fi process instance", "massiva", expedient_s);
+				notificacioSicer(exm, expedientTipus);
+				mesuresTemporalsHelper.mesuraCalcular("desfer fi process instance", "massiva", expedient_s);
 			} else if (tipus == ExecucioMassivaTipus.REPRENDRE){
 				mesuresTemporalsHelper.mesuraIniciar("reprendre tramitació process instance", "massiva", expedient_s);
 				reprendreTramitacio(ome);
@@ -1555,6 +1560,62 @@ public class ExecucioMassivaServiceImpl implements ExecucioMassivaService {
 			logger.error("OPERACIO:" + ome.getId() + ". No s'ha pogut desfer la finalització de l'expedient", ex);
 			throw ex;
 		}
+	}
+	
+	private void notificacioSicer(ExecucioMassiva exe, ExpedientTipus expedientTipus) throws Exception {
+		PrintWriter fitxer = new PrintWriter("fitxeret-de-coses.txt", "UTF-8");
+		Date dataFitxer = new Date();
+	    Calendar fitxerData = Calendar.getInstance();
+	    fitxerData.setTime(dataFitxer);
+	    
+		String codiRemesa = exe.getParam1();
+		
+		Object param2 = deserialize(exe.getParam2());
+		Date dataEmisio = (Date)((Object[])param2)[0];
+		Calendar emisioData = Calendar.getInstance();
+		emisioData.setTime(dataEmisio);
+		    
+		Date dataPrevistaDeposit = (Date)((Object[])param2)[1];
+		Calendar previstaDepositData = Calendar.getInstance();
+		previstaDepositData.setTime(dataPrevistaDeposit);
+		
+		String headerFitxer = "FN";
+		headerFitxer += expedientTipus.getSicerProducteCodi();
+		headerFitxer += expedientTipus.getSicerClientCodi();
+		headerFitxer += expedientTipus.getSicerPuntAdmissioCodi();
+		headerFitxer += fitxerData.get(Calendar.YEAR) + (fitxerData.get(Calendar.MONTH) + 1) + fitxerData.get(Calendar.DAY_OF_MONTH);
+		headerFitxer += fitxerData.get(Calendar.HOUR_OF_DAY) + ":" + fitxerData.get(Calendar.MINUTE);
+		headerFitxer = String.format("%1$-" + 283 + "s", headerFitxer);
+		fitxer.println(headerFitxer);
+		
+		String headerRemesa = "C";
+		headerRemesa += expedientTipus.getSicerProducteCodi();
+		headerRemesa += expedientTipus.getSicerClientCodi();
+		headerRemesa += codiRemesa;
+		headerRemesa += emisioData.get(Calendar.YEAR) + (emisioData.get(Calendar.MONTH) + 1) + emisioData.get(Calendar.DAY_OF_MONTH);
+		headerRemesa += previstaDepositData.get(Calendar.YEAR) + (previstaDepositData.get(Calendar.MONTH) + 1) + previstaDepositData.get(Calendar.DAY_OF_MONTH);
+		headerRemesa = String.format("%1$-" + 284 + "s", headerRemesa);
+		fitxer.println(headerRemesa);
+		
+		for (ExecucioMassivaExpedient ome: exe.getExpedients()) {
+			try  {
+				ome.setDataInici(new Date());
+				// linia detall fitxer
+				String detall = "D";
+				
+				detall = String.format("%1$-" + 9 + "s", detall);
+				fitxer.println(detall);
+				/////////////////////
+				ome.setEstat(ExecucioMassivaEstat.ESTAT_FINALITZAT);
+				ome.setDataFi(new Date());
+				execucioMassivaExpedientRepository.save(ome);
+				
+			} catch (Exception ex) {
+				logger.error("OPERACIO:" + ome.getId() + ". No s'ha pogut desfer la finalització de l'expedient", ex);
+				throw ex;
+			}
+		}
+		fitxer.close();
 	}
 
 	private void reprendreTramitacio(ExecucioMassivaExpedient ome) throws Exception {

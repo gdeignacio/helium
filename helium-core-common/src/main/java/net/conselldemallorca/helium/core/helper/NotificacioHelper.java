@@ -18,6 +18,7 @@ import net.conselldemallorca.helium.core.model.hibernate.Notificacio;
 import net.conselldemallorca.helium.integracio.plugins.registre.RespostaJustificantRecepcio;
 import net.conselldemallorca.helium.v3.core.api.dto.DocumentEnviamentEstatEnumDto;
 import net.conselldemallorca.helium.v3.core.api.dto.DocumentNotificacioDto;
+import net.conselldemallorca.helium.v3.core.api.dto.DocumentNotificacioTipusEnumDto;
 import net.conselldemallorca.helium.v3.core.api.dto.ExpedientDto;
 import net.conselldemallorca.helium.v3.core.api.dto.NotificacioDto;
 import net.conselldemallorca.helium.v3.core.repository.DocumentStoreRepository;
@@ -71,6 +72,17 @@ public class NotificacioHelper {
 				false);
 		
 		return notificacioRepository.findByExpedientOrderByDataEnviamentDesc(expedient);
+	}
+	
+	public List<Notificacio> findNotificacionsPerExpedientIdITipus(Long expedientId, DocumentNotificacioTipusEnumDto tipus) {
+		Expedient expedient = expedientHelper.getExpedientComprovantPermisos(
+				expedientId, 
+				true, 
+				false, 
+				false, 
+				false);
+		
+		return notificacioRepository.findByExpedientAndTipusOrderByDataEnviamentDesc(expedient, tipus);
 	}
 	
 	public void obtenirJustificantNotificacio(Notificacio notificacio) {

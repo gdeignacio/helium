@@ -69,6 +69,9 @@ public class Notificacio implements Serializable, GenericEntity<Long> {
 	@Column(name = "data_enviament", nullable = false)
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date dataEnviament;
+	@Column(name = "data_creacio", nullable = false)
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date dataCreacio;
 	@Column(name = "observacions", length = 256)
 	private String observacions;
 	@ManyToOne(optional = false, fetch = FetchType.EAGER)
@@ -196,6 +199,13 @@ public class Notificacio implements Serializable, GenericEntity<Long> {
 	}
 	public void setDataEnviament(Date dataEnviament) {
 		this.dataEnviament = dataEnviament;
+	}
+	
+	public Date getDataCreacio() {
+		return dataCreacio;
+	}
+	public void setDataCreacio(Date dataCreacio) {
+		this.dataCreacio = dataCreacio;
 	}
 
 	
