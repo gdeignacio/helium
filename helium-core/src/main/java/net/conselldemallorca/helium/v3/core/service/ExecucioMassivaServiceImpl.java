@@ -52,6 +52,7 @@ import net.conselldemallorca.helium.core.helper.ExpedientHelper;
 import net.conselldemallorca.helium.core.helper.IndexHelper;
 import net.conselldemallorca.helium.core.helper.MailHelper;
 import net.conselldemallorca.helium.core.helper.MessageHelper;
+import net.conselldemallorca.helium.core.helper.NotificacioHelper;
 import net.conselldemallorca.helium.core.helper.PermisosHelper;
 import net.conselldemallorca.helium.core.helper.PluginHelper;
 import net.conselldemallorca.helium.core.helper.TascaHelper;
@@ -71,6 +72,7 @@ import net.conselldemallorca.helium.core.model.hibernate.ExecucioMassivaExpedien
 import net.conselldemallorca.helium.core.model.hibernate.ExecucioMassivaExpedient.ExecucioMassivaEstat;
 import net.conselldemallorca.helium.core.model.hibernate.Expedient;
 import net.conselldemallorca.helium.core.model.hibernate.ExpedientTipus;
+import net.conselldemallorca.helium.core.model.hibernate.Notificacio;
 import net.conselldemallorca.helium.core.model.hibernate.Persona;
 import net.conselldemallorca.helium.core.model.hibernate.Termini;
 import net.conselldemallorca.helium.core.util.EntornActual;
@@ -151,6 +153,8 @@ public class ExecucioMassivaServiceImpl implements ExecucioMassivaService {
 	private JbpmHelper jbpmHelper;
 	@Resource
 	private TascaHelper tascaHelper;
+	@Resource
+	private NotificacioHelper notificacioHelper;
 	@Resource
 	private MessageHelper messageHelper;
 	@Resource
@@ -1604,8 +1608,8 @@ public class ExecucioMassivaServiceImpl implements ExecucioMassivaService {
 			try  {
 				ome.setDataInici(new Date());
 				
-				List<NotificacioDto> notificacionsSicer = expedientService.findNotificacionsPerExpedientId(ome.getExpedient().getId(), DocumentNotificacioTipusEnumDto.SICER);
-				for (NotificacioDto notificacio: notificacionsSicer) {
+				List<Notificacio> notificacionsSicer = notificacioHelper.findNotificacionsPerExpedientIdITipus(ome.getExpedient().getId(), DocumentNotificacioTipusEnumDto.SICER);
+				for (Notificacio notificacio: notificacionsSicer) {
 					String detall = "D";
 					detall += expedientTipus.getSicerProducteCodi();
 					detall += expedientTipus.getSicerClientCodi();
@@ -1643,6 +1647,19 @@ public class ExecucioMassivaServiceImpl implements ExecucioMassivaService {
 		fitxer.println(footerFitxer);
 		
 		fitxer.close();
+	}
+	
+	private String fragmentFitxer(String value, int maxLength, boolean isNumeric) {
+		if (value.length() > maxLength) {
+			value = value.substring(0, maxLength);
+		} else if (value.length() < maxLength) {
+			if (isNumeric) {
+				value = String.format("%0" + maxLength + "d", value);
+			} else {
+				value = String.format("%1$-" + maxLength + "s", value);
+			}
+		}
+		return value;
 	}
 
 	private void reprendreTramitacio(ExecucioMassivaExpedient ome) throws Exception {
