@@ -77,11 +77,13 @@ import net.conselldemallorca.helium.core.util.EntornActual;
 import net.conselldemallorca.helium.core.util.GlobalProperties;
 import net.conselldemallorca.helium.jbpm3.integracio.JbpmHelper;
 import net.conselldemallorca.helium.jbpm3.integracio.JbpmTask;
+import net.conselldemallorca.helium.v3.core.api.dto.DocumentNotificacioTipusEnumDto;
 import net.conselldemallorca.helium.v3.core.api.dto.ExecucioMassivaDto;
 import net.conselldemallorca.helium.v3.core.api.dto.ExecucioMassivaDto.ExecucioMassivaTipusDto;
 import net.conselldemallorca.helium.v3.core.api.dto.ExpedientDocumentDto;
 import net.conselldemallorca.helium.v3.core.api.dto.ExpedientTascaDto;
 import net.conselldemallorca.helium.v3.core.api.dto.InstanciaProcesDto;
+import net.conselldemallorca.helium.v3.core.api.dto.NotificacioDto;
 import net.conselldemallorca.helium.v3.core.api.dto.PermisDto;
 import net.conselldemallorca.helium.v3.core.api.dto.PrincipalTipusEnumDto;
 import net.conselldemallorca.helium.v3.core.api.dto.TascaDocumentDto;
@@ -1597,24 +1599,49 @@ public class ExecucioMassivaServiceImpl implements ExecucioMassivaService {
 		headerRemesa = String.format("%1$-" + 284 + "s", headerRemesa);
 		fitxer.println(headerRemesa);
 		
+		int detalls = 0;
 		for (ExecucioMassivaExpedient ome: exe.getExpedients()) {
 			try  {
 				ome.setDataInici(new Date());
-				// linia detall fitxer
-				String detall = "D";
 				
-				detall = String.format("%1$-" + 9 + "s", detall);
-				fitxer.println(detall);
-				/////////////////////
+				List<NotificacioDto> notificacionsSicer = expedientService.findNotificacionsPerExpedientId(ome.getExpedient().getId(), DocumentNotificacioTipusEnumDto.SICER);
+				for (NotificacioDto notificacio: notificacionsSicer) {
+					String detall = "D";
+					detall += expedientTipus.getSicerProducteCodi();
+					detall += expedientTipus.getSicerClientCodi();
+					detall += codiRemesa;
+					detall += (codiRemesa + String.format("%05d", detalls));
+					detall = String.format("%1$-" + 9 + "s", detall);
+					fitxer.println(detall);
+				}
+				
 				ome.setEstat(ExecucioMassivaEstat.ESTAT_FINALITZAT);
 				ome.setDataFi(new Date());
 				execucioMassivaExpedientRepository.save(ome);
+				detalls++;
 				
 			} catch (Exception ex) {
 				logger.error("OPERACIO:" + ome.getId() + ". No s'ha pogut desfer la finalització de l'expedient", ex);
 				throw ex;
 			}
 		}
+		
+		String footerRemesa = "c";
+		footerRemesa += expedientTipus.getSicerProducteCodi();
+		footerRemesa += expedientTipus.getSicerClientCodi();
+		footerRemesa += codiRemesa;
+		footerRemesa += String.format("%09d", detalls);
+		footerRemesa = String.format("%1$-" + 291 + "s", footerRemesa);
+		fitxer.println(footerRemesa);
+		
+		String footerFitxer = "f";
+		footerFitxer += expedientTipus.getSicerProducteCodi();
+		footerFitxer += expedientTipus.getSicerClientCodi();
+		footerFitxer += String.format("%03d", 1);
+		footerFitxer += String.format("%09d", detalls);
+		footerFitxer = String.format("%1$-" + 292 + "s", footerFitxer);
+		fitxer.println(footerFitxer);
+		
 		fitxer.close();
 	}
 
