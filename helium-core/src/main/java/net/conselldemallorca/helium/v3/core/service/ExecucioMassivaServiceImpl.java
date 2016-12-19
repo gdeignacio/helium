@@ -85,7 +85,6 @@ import net.conselldemallorca.helium.v3.core.api.dto.ExecucioMassivaDto.ExecucioM
 import net.conselldemallorca.helium.v3.core.api.dto.ExpedientDocumentDto;
 import net.conselldemallorca.helium.v3.core.api.dto.ExpedientTascaDto;
 import net.conselldemallorca.helium.v3.core.api.dto.InstanciaProcesDto;
-import net.conselldemallorca.helium.v3.core.api.dto.NotificacioDto;
 import net.conselldemallorca.helium.v3.core.api.dto.PermisDto;
 import net.conselldemallorca.helium.v3.core.api.dto.PrincipalTipusEnumDto;
 import net.conselldemallorca.helium.v3.core.api.dto.TascaDocumentDto;
@@ -1569,41 +1568,55 @@ public class ExecucioMassivaServiceImpl implements ExecucioMassivaService {
 	}
 	
 	private void notificacioSicer(ExecucioMassiva exe, ExpedientTipus expedientTipus) throws Exception {
-		PrintWriter fitxer = new PrintWriter("fitxeret-de-coses.txt", "UTF-8");
+		
+		String codiProducte = fragmentFitxer(expedientTipus.getSicerProducteCodi(), 2, false);
+		String codiClient = fragmentFitxer(expedientTipus.getSicerClientCodi(), 8, false);
+		String codiRemesa = fragmentFitxer(exe.getParam1(), 4, false);
+		
 		Date dataFitxer = new Date();
 	    Calendar fitxerData = Calendar.getInstance();
 	    fitxerData.setTime(dataFitxer);
-	    
-		String codiRemesa = exe.getParam1();
+	    String fitxerAnyMesDia = anyMesDiaData(fitxerData);
 		
+		String nomFitxer = 
+				codiProducte + 
+				codiClient + 
+				fitxerAnyMesDia +
+				"." +
+				fragmentFitxer(fitxerData.get(Calendar.HOUR_OF_DAY), 2, true) + fragmentFitxer(fitxerData.get(Calendar.MINUTE), 2, true);
+		
+		PrintWriter fitxer = new PrintWriter("C:/Feina/HELIUM/SICER/" + nomFitxer, "UTF-8");
+	    
 		Object param2 = deserialize(exe.getParam2());
 		Date dataEmisio = (Date)((Object[])param2)[0];
 		Calendar emisioData = Calendar.getInstance();
 		emisioData.setTime(dataEmisio);
+		String emisioAnyMesDia = anyMesDiaData(emisioData);
 		    
 		Date dataPrevistaDeposit = (Date)((Object[])param2)[1];
 		Calendar previstaDepositData = Calendar.getInstance();
 		previstaDepositData.setTime(dataPrevistaDeposit);
+		String previstaDepositAnyMesDia = anyMesDiaData(previstaDepositData);
 		
 		String headerFitxer = "FN";
-		headerFitxer += expedientTipus.getSicerProducteCodi();
-		headerFitxer += expedientTipus.getSicerClientCodi();
-		headerFitxer += expedientTipus.getSicerPuntAdmissioCodi();
-		headerFitxer += fitxerData.get(Calendar.YEAR) + (fitxerData.get(Calendar.MONTH) + 1) + fitxerData.get(Calendar.DAY_OF_MONTH);
-		headerFitxer += fitxerData.get(Calendar.HOUR_OF_DAY) + ":" + fitxerData.get(Calendar.MINUTE);
-		headerFitxer = String.format("%1$-" + 283 + "s", headerFitxer);
+		headerFitxer += codiProducte;
+		headerFitxer += codiClient;
+		headerFitxer += fragmentFitxer(expedientTipus.getSicerPuntAdmissioCodi(), 7, false);
+		headerFitxer += fitxerAnyMesDia;
+		headerFitxer += fragmentFitxer(fitxerData.get(Calendar.HOUR_OF_DAY), 2, true) + ":" + fragmentFitxer(fitxerData.get(Calendar.MINUTE), 2, true);
+		headerFitxer = String.format("%1$-" + 315 + "s", headerFitxer);
 		fitxer.println(headerFitxer);
 		
 		String headerRemesa = "C";
-		headerRemesa += expedientTipus.getSicerProducteCodi();
-		headerRemesa += expedientTipus.getSicerClientCodi();
+		headerRemesa += codiProducte;
+		headerRemesa += codiClient;
 		headerRemesa += codiRemesa;
-		headerRemesa += emisioData.get(Calendar.YEAR) + (emisioData.get(Calendar.MONTH) + 1) + emisioData.get(Calendar.DAY_OF_MONTH);
-		headerRemesa += previstaDepositData.get(Calendar.YEAR) + (previstaDepositData.get(Calendar.MONTH) + 1) + previstaDepositData.get(Calendar.DAY_OF_MONTH);
-		headerRemesa = String.format("%1$-" + 284 + "s", headerRemesa);
+		headerRemesa += emisioAnyMesDia;
+		headerRemesa += previstaDepositAnyMesDia;
+		headerRemesa = String.format("%1$-" + 315 + "s", headerRemesa);
 		fitxer.println(headerRemesa);
 		
-		int detalls = 0;
+		int countDetalls = 0;
 		for (ExecucioMassivaExpedient ome: exe.getExpedients()) {
 			try  {
 				ome.setDataInici(new Date());
@@ -1611,18 +1624,25 @@ public class ExecucioMassivaServiceImpl implements ExecucioMassivaService {
 				List<Notificacio> notificacionsSicer = notificacioHelper.findNotificacionsPerExpedientIdITipus(ome.getExpedient().getId(), DocumentNotificacioTipusEnumDto.SICER);
 				for (Notificacio notificacio: notificacionsSicer) {
 					String detall = "D";
-					detall += expedientTipus.getSicerProducteCodi();
-					detall += expedientTipus.getSicerClientCodi();
+					detall += codiProducte;
+					detall += codiClient;
 					detall += codiRemesa;
-					detall += (codiRemesa + String.format("%05d", detalls));
-					detall = String.format("%1$-" + 9 + "s", detall);
+					detall += (codiRemesa + String.format("%05d", countDetalls));
+					detall += fragmentFitxer(expedientTipus.getSicerNomLlinatges(), 50, false);
+					detall += String.format("%" + 50 + "s", "");
+					detall += fragmentFitxer(expedientTipus.getSicerDireccio(), 50, false);
+					detall += fragmentFitxer(expedientTipus.getSicerPoblacio(), 40, false);
+					detall += fragmentFitxer(expedientTipus.getSicerCodiPostal(), 5, true);
+					detall += String.format("%" + 46 + "s", "");
+					detall += fragmentFitxer(notificacio.getExpedient().getId(), 41, false);
+					detall = String.format("%1$-" + 315 + "s", detall);
 					fitxer.println(detall);
+					countDetalls++;
 				}
 				
 				ome.setEstat(ExecucioMassivaEstat.ESTAT_FINALITZAT);
 				ome.setDataFi(new Date());
 				execucioMassivaExpedientRepository.save(ome);
-				detalls++;
 				
 			} catch (Exception ex) {
 				logger.error("OPERACIO:" + ome.getId() + ". No s'ha pogut desfer la finalització de l'expedient", ex);
@@ -1630,36 +1650,43 @@ public class ExecucioMassivaServiceImpl implements ExecucioMassivaService {
 			}
 		}
 		
+		String totalDetalls = fragmentFitxer(countDetalls, 9, true);
+		
 		String footerRemesa = "c";
-		footerRemesa += expedientTipus.getSicerProducteCodi();
-		footerRemesa += expedientTipus.getSicerClientCodi();
+		footerRemesa += codiProducte;
+		footerRemesa += codiClient;
 		footerRemesa += codiRemesa;
-		footerRemesa += String.format("%09d", detalls);
-		footerRemesa = String.format("%1$-" + 291 + "s", footerRemesa);
+		footerRemesa += totalDetalls;
+		footerRemesa = String.format("%1$-" + 315 + "s", footerRemesa);
 		fitxer.println(footerRemesa);
 		
 		String footerFitxer = "f";
-		footerFitxer += expedientTipus.getSicerProducteCodi();
-		footerFitxer += expedientTipus.getSicerClientCodi();
+		footerFitxer += codiProducte;
+		footerFitxer += codiClient;
 		footerFitxer += String.format("%03d", 1);
-		footerFitxer += String.format("%09d", detalls);
-		footerFitxer = String.format("%1$-" + 292 + "s", footerFitxer);
+		footerFitxer += totalDetalls;
+		footerFitxer = String.format("%1$-" + 315 + "s", footerFitxer);
 		fitxer.println(footerFitxer);
 		
 		fitxer.close();
 	}
 	
-	private String fragmentFitxer(String value, int maxLength, boolean isNumeric) {
-		if (value.length() > maxLength) {
-			value = value.substring(0, maxLength);
-		} else if (value.length() < maxLength) {
+	private String fragmentFitxer(Object value, int maxLength, boolean isNumeric) {
+		if (String.valueOf(value).length() > maxLength) {
+			value = String.valueOf(value).substring(0, maxLength);
+		} else if (String.valueOf(value).length() < maxLength) {
 			if (isNumeric) {
+				value = (Integer)value;
 				value = String.format("%0" + maxLength + "d", value);
 			} else {
 				value = String.format("%1$-" + maxLength + "s", value);
 			}
 		}
-		return value;
+		return String.valueOf(value);
+	}
+	
+	private String anyMesDiaData(Calendar data) {
+		return fragmentFitxer(data.get(Calendar.YEAR), 4, true) + fragmentFitxer((data.get(Calendar.MONTH) + 1), 2, true) + fragmentFitxer(data.get(Calendar.DAY_OF_MONTH), 2, true);
 	}
 
 	private void reprendreTramitacio(ExecucioMassivaExpedient ome) throws Exception {
