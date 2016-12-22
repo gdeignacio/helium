@@ -10,7 +10,6 @@ import java.io.Serializable;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -72,14 +71,12 @@ import net.conselldemallorca.helium.core.model.hibernate.ExecucioMassivaExpedien
 import net.conselldemallorca.helium.core.model.hibernate.ExecucioMassivaExpedient.ExecucioMassivaEstat;
 import net.conselldemallorca.helium.core.model.hibernate.Expedient;
 import net.conselldemallorca.helium.core.model.hibernate.ExpedientTipus;
-import net.conselldemallorca.helium.core.model.hibernate.Notificacio;
 import net.conselldemallorca.helium.core.model.hibernate.Persona;
 import net.conselldemallorca.helium.core.model.hibernate.Termini;
 import net.conselldemallorca.helium.core.util.EntornActual;
 import net.conselldemallorca.helium.core.util.GlobalProperties;
 import net.conselldemallorca.helium.jbpm3.integracio.JbpmHelper;
 import net.conselldemallorca.helium.jbpm3.integracio.JbpmTask;
-import net.conselldemallorca.helium.v3.core.api.dto.DocumentNotificacioTipusEnumDto;
 import net.conselldemallorca.helium.v3.core.api.dto.ExecucioMassivaDto;
 import net.conselldemallorca.helium.v3.core.api.dto.ExecucioMassivaDto.ExecucioMassivaTipusDto;
 import net.conselldemallorca.helium.v3.core.api.dto.ExpedientDocumentDto;
@@ -110,6 +107,7 @@ import net.conselldemallorca.helium.v3.core.repository.ExecucioMassivaRepository
 import net.conselldemallorca.helium.v3.core.repository.ExpedientRepository;
 import net.conselldemallorca.helium.v3.core.repository.ExpedientTipusRepository;
 import net.conselldemallorca.helium.v3.core.repository.PersonaRepository;
+import net.conselldemallorca.helium.v3.core.repository.RemesaRepository;
 
 /**
  * Servei per a gestionar la tramitació massiva d'expedients.
@@ -144,6 +142,8 @@ public class ExecucioMassivaServiceImpl implements ExecucioMassivaService {
 	private CampRepository campRepository;
 	@Resource
 	private AccioRepository accioRepository;
+	@Resource
+	private RemesaRepository remesaRepository;
 	@Resource
 	private ExpedientHelper expedientHelper;
 	@Resource
@@ -187,7 +187,6 @@ public class ExecucioMassivaServiceImpl implements ExecucioMassivaService {
 	private ExpedientTascaService expedientTascaService;
 	@Autowired
 	private ExpedientRegistreService expedientRegistreService;
-
 
 
 	@Transactional
@@ -933,7 +932,7 @@ public class ExecucioMassivaServiceImpl implements ExecucioMassivaService {
 		if (ome == null)
 			throw new NoTrobatException(ExecucioMassivaExpedient.class, ome_id);
 		
-		if (ome.getExecucioMassiva().getExpedients().size() == ome.getOrdre() + 1) {
+		if (ome.getExecucioMassiva().getExpedients().size() == ome.getOrdre() + 1 || ome.getExecucioMassiva().getTipus() == ExecucioMassivaTipus.NOTIFICACIO_SICER) {
 			try {
 				ExecucioMassiva em = ome.getExecucioMassiva();
 				em.setDataFi(new Date());
@@ -1569,126 +1568,28 @@ public class ExecucioMassivaServiceImpl implements ExecucioMassivaService {
 	
 	private void notificacioSicer(ExecucioMassiva exe, ExpedientTipus expedientTipus) throws Exception {
 		
-		String codiProducte = fragmentFitxer(expedientTipus.getSicerProducteCodi(), 2, false);
-		String codiClient = fragmentFitxer(expedientTipus.getSicerClientCodi(), 8, false);
-		String codiRemesa = fragmentFitxer(exe.getParam1(), 4, false);
+		String codiRemesa = exe.getParam1();
 		
-		Date dataFitxer = new Date();
-	    Calendar fitxerData = Calendar.getInstance();
-	    fitxerData.setTime(dataFitxer);
-	    String fitxerAnyMesDia = anyMesDiaData(fitxerData);
-		
-		String nomFitxer = 
-				codiProducte + 
-				codiClient + 
-				fitxerAnyMesDia +
-				"." +
-				fragmentFitxer(fitxerData.get(Calendar.HOUR_OF_DAY), 2, true) + fragmentFitxer(fitxerData.get(Calendar.MINUTE), 2, true);
-		
-		PrintWriter fitxer = new PrintWriter("C:/Feina/HELIUM/SICER/" + nomFitxer, "UTF-8");
-	    
 		Object param2 = deserialize(exe.getParam2());
 		Date dataEmisio = (Date)((Object[])param2)[0];
-		Calendar emisioData = Calendar.getInstance();
-		emisioData.setTime(dataEmisio);
-		String emisioAnyMesDia = anyMesDiaData(emisioData);
-		    
 		Date dataPrevistaDeposit = (Date)((Object[])param2)[1];
-		Calendar previstaDepositData = Calendar.getInstance();
-		previstaDepositData.setTime(dataPrevistaDeposit);
-		String previstaDepositAnyMesDia = anyMesDiaData(previstaDepositData);
 		
-		String headerFitxer = "FN";
-		headerFitxer += codiProducte;
-		headerFitxer += codiClient;
-		headerFitxer += fragmentFitxer(expedientTipus.getSicerPuntAdmissioCodi(), 7, false);
-		headerFitxer += fitxerAnyMesDia;
-		headerFitxer += fragmentFitxer(fitxerData.get(Calendar.HOUR_OF_DAY), 2, true) + ":" + fragmentFitxer(fitxerData.get(Calendar.MINUTE), 2, true);
-		headerFitxer = String.format("%1$-" + 315 + "s", headerFitxer);
-		fitxer.println(headerFitxer);
-		
-		String headerRemesa = "C";
-		headerRemesa += codiProducte;
-		headerRemesa += codiClient;
-		headerRemesa += codiRemesa;
-		headerRemesa += emisioAnyMesDia;
-		headerRemesa += previstaDepositAnyMesDia;
-		headerRemesa = String.format("%1$-" + 315 + "s", headerRemesa);
-		fitxer.println(headerRemesa);
-		
-		int countDetalls = 0;
+		List<Long> expedientIds = new ArrayList<Long>();
 		for (ExecucioMassivaExpedient ome: exe.getExpedients()) {
-			try  {
-				ome.setDataInici(new Date());
-				
-				List<Notificacio> notificacionsSicer = notificacioHelper.findNotificacionsPerExpedientIdITipus(ome.getExpedient().getId(), DocumentNotificacioTipusEnumDto.SICER);
-				for (Notificacio notificacio: notificacionsSicer) {
-					String detall = "D";
-					detall += codiProducte;
-					detall += codiClient;
-					detall += codiRemesa;
-					detall += (codiRemesa + String.format("%05d", countDetalls));
-					detall += fragmentFitxer(expedientTipus.getSicerNomLlinatges(), 50, false);
-					detall += String.format("%" + 50 + "s", "");
-					detall += fragmentFitxer(expedientTipus.getSicerDireccio(), 50, false);
-					detall += fragmentFitxer(expedientTipus.getSicerPoblacio(), 40, false);
-					detall += fragmentFitxer(expedientTipus.getSicerCodiPostal(), 5, true);
-					detall += String.format("%" + 46 + "s", "");
-					detall += fragmentFitxer(notificacio.getExpedient().getId(), 41, false);
-					detall = String.format("%1$-" + 315 + "s", detall);
-					fitxer.println(detall);
-					countDetalls++;
-				}
-				
-				ome.setEstat(ExecucioMassivaEstat.ESTAT_FINALITZAT);
-				ome.setDataFi(new Date());
-				execucioMassivaExpedientRepository.save(ome);
-				
-			} catch (Exception ex) {
-				logger.error("OPERACIO:" + ome.getId() + ". No s'ha pogut desfer la finalització de l'expedient", ex);
-				throw ex;
-			}
+			ome.setDataInici(new Date());
+			expedientIds.add(ome.getExpedient().getId());
 		}
 		
-		String totalDetalls = fragmentFitxer(countDetalls, 9, true);
+		notificacioHelper.enviarRemesa(codiRemesa, dataEmisio, dataPrevistaDeposit, expedientTipus.getId(), expedientIds);
 		
-		String footerRemesa = "c";
-		footerRemesa += codiProducte;
-		footerRemesa += codiClient;
-		footerRemesa += codiRemesa;
-		footerRemesa += totalDetalls;
-		footerRemesa = String.format("%1$-" + 315 + "s", footerRemesa);
-		fitxer.println(footerRemesa);
-		
-		String footerFitxer = "f";
-		footerFitxer += codiProducte;
-		footerFitxer += codiClient;
-		footerFitxer += String.format("%03d", 1);
-		footerFitxer += totalDetalls;
-		footerFitxer = String.format("%1$-" + 315 + "s", footerFitxer);
-		fitxer.println(footerFitxer);
-		
-		fitxer.close();
-	}
-	
-	private String fragmentFitxer(Object value, int maxLength, boolean isNumeric) {
-		if (String.valueOf(value).length() > maxLength) {
-			value = String.valueOf(value).substring(0, maxLength);
-		} else if (String.valueOf(value).length() < maxLength) {
-			if (isNumeric) {
-				value = (Integer)value;
-				value = String.format("%0" + maxLength + "d", value);
-			} else {
-				value = String.format("%1$-" + maxLength + "s", value);
-			}
+		for (ExecucioMassivaExpedient ome: exe.getExpedients()) {
+			ome.setEstat(ExecucioMassivaEstat.ESTAT_FINALITZAT);
+			ome.setDataFi(new Date());
+			execucioMassivaExpedientRepository.save(ome);
 		}
-		return String.valueOf(value);
+		
 	}
 	
-	private String anyMesDiaData(Calendar data) {
-		return fragmentFitxer(data.get(Calendar.YEAR), 4, true) + fragmentFitxer((data.get(Calendar.MONTH) + 1), 2, true) + fragmentFitxer(data.get(Calendar.DAY_OF_MONTH), 2, true);
-	}
-
 	private void reprendreTramitacio(ExecucioMassivaExpedient ome) throws Exception {
 		Expedient exp = ome.getExpedient();
 		try {

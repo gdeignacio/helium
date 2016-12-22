@@ -60,6 +60,7 @@ public class NotificacioDto implements Serializable {
 	private DocumentNotificacioDto document;
 	private List<DocumentNotificacioDto> annexos = new ArrayList<DocumentNotificacioDto>();
 	private String error;
+	private RemesaDto remesa;
 	
 	private static final long serialVersionUID = 1715501096089688125L;
 
@@ -396,6 +397,14 @@ public class NotificacioDto implements Serializable {
 
 	public void setError(String error) {
 		this.error = error;
+	}
+
+	public RemesaDto getRemesa() {
+		return remesa;
+	}
+
+	public void setRemesa(RemesaDto remesa) {
+		this.remesa = remesa;
 	}
 
 }

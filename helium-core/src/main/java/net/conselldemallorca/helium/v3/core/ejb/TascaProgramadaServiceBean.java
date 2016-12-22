@@ -35,4 +35,10 @@ public class TascaProgramadaServiceBean implements TascaProgramadaService {
 		delegate.actualitzarEstatNotificacions();
 	}
 
+	@Override
+	@RolesAllowed({"HEL_ADMIN", "HEL_USER", "TOTHOM", "tothom"})
+	public void actualitzarEstatNotificacionsSicer() throws NoTrobatException {
+		delegate.actualitzarEstatNotificacionsSicer();
+	}
+
 }

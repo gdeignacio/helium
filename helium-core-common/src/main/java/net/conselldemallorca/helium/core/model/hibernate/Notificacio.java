@@ -159,6 +159,10 @@ public class Notificacio implements Serializable, GenericEntity<Long> {
 	private String rdsClau;
 	@Column(name = "error_notificacio", length = 1024)
 	private String error;
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "remesa_id")
+	@ForeignKey(name = "hel_remesa_notif_fk")
+	private Remesa remesa;
 	
 
 //	
@@ -490,6 +494,13 @@ public class Notificacio implements Serializable, GenericEntity<Long> {
 	}
 	public void setError(String error) {
 		this.error = error;
+	}
+
+	public Remesa getRemesa() {
+		return remesa;
+	}
+	public void setRemesa(Remesa remesa) {
+		this.remesa = remesa;
 	}
 
 	private static final long serialVersionUID = 1L;

@@ -31,6 +31,7 @@ import net.conselldemallorca.helium.v3.core.api.dto.NotificacioDto;
 import net.conselldemallorca.helium.v3.core.api.exception.SistemaExternException;
 import net.conselldemallorca.helium.v3.core.api.service.ExpedientDocumentService;
 import net.conselldemallorca.helium.v3.core.api.service.ExpedientService;
+import net.conselldemallorca.helium.v3.core.api.service.NotificacioService;
 import net.conselldemallorca.helium.webapp.mvc.ArxiuView;
 import net.conselldemallorca.helium.webapp.v3.helper.MissatgesHelper;
 import net.conselldemallorca.helium.webapp.v3.helper.ObjectTypeEditorHelper;
@@ -48,6 +49,8 @@ public class ExpedientNotificacioController extends BaseExpedientController {
 	private ExpedientService expedientService;
 	@Autowired
 	private ExpedientDocumentService expedientDocumentService;
+	@Autowired
+	private NotificacioService notificacioService;
 
 	@RequestMapping(value = "/{expedientId}/notificacions", method = RequestMethod.GET)
 	public String notificacions(
@@ -134,6 +137,33 @@ public class ExpedientNotificacioController extends BaseExpedientController {
  			modalUrlTancar(true);
 		}
 		return "arxiuView";
+	}
+	
+	@RequestMapping(value = "/{expedientId}/notificacio/{notificacioId}/remesa/{remesaId}/reenviar", method = RequestMethod.GET)
+	public String notificacioSicerReenviar(
+			HttpServletRequest request,
+			@PathVariable Long expedientId,
+			@PathVariable Long notificacioId,
+			@PathVariable Long remesaId,
+			Model model) {
+		ExpedientDto expedient = expedientService.findAmbId(expedientId);
+		try {
+			notificacioService.reenviarRemesa(remesaId, expedient.getTipus().getId());
+			MissatgesHelper.success(
+					request,
+					getMessage(
+							request,
+							"expedient.notificacio.sicer.reenviada"));
+		} catch (Exception e) {
+			MissatgesHelper.error(
+					request,
+					getMessage(
+							request,
+							"expedient.notificacio.sicer.reenviada.error"));
+		}
+		
+		model.addAttribute("pipellaActiva", "notificacions");
+		return "redirect:/v3/expedient/" + expedientId;
 	}
 	
 	@InitBinder
