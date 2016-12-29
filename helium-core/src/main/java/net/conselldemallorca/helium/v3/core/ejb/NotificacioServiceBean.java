@@ -24,4 +24,11 @@ public class NotificacioServiceBean implements NotificacioService {
 		delegate.reenviarRemesa(remesaId, expedientTipusId);
 	}
 
+
+	@Override
+	@RolesAllowed({"HEL_ADMIN", "HEL_USER", "TOTHOM", "tothom"})
+	public void refrescarRemesa(Long remesaId) throws NoTrobatException, Exception {
+		delegate.refrescarRemesa(remesaId);
+	}
+
 }

@@ -166,6 +166,33 @@ public class ExpedientNotificacioController extends BaseExpedientController {
 		return "redirect:/v3/expedient/" + expedientId;
 	}
 	
+	@RequestMapping(value = "/{expedientId}/notificacio/{notificacioId}/remesa/{remesaId}/refrescar", method = RequestMethod.GET)
+	public String notificacioSicerRefrescar(
+			HttpServletRequest request,
+			@PathVariable Long expedientId,
+			@PathVariable Long notificacioId,
+			@PathVariable Long remesaId,
+			Model model) {
+		expedientService.findAmbId(expedientId);
+		try {
+			notificacioService.refrescarRemesa(remesaId);
+			MissatgesHelper.success(
+					request,
+					getMessage(
+							request,
+							"expedient.notificacio.sicer.refrescada"));
+		} catch (Exception e) {
+			MissatgesHelper.error(
+					request,
+					getMessage(
+							request,
+							"expedient.notificacio.sicer.refrescada.error"));
+		}
+		
+		model.addAttribute("pipellaActiva", "notificacions");
+		return "redirect:/v3/expedient/" + expedientId;
+	}
+	
 	@InitBinder
 	public void initBinder(WebDataBinder binder) {
 		binder.registerCustomEditor(

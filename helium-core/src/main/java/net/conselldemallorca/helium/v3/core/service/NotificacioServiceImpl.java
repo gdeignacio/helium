@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import net.conselldemallorca.helium.core.helper.NotificacioHelper;
 import net.conselldemallorca.helium.core.model.hibernate.Remesa;
+import net.conselldemallorca.helium.v3.core.api.dto.DocumentEnviamentEstatEnumDto;
 import net.conselldemallorca.helium.v3.core.api.service.NotificacioService;
 import net.conselldemallorca.helium.v3.core.repository.RemesaRepository;
 
@@ -40,4 +41,14 @@ public class NotificacioServiceImpl implements NotificacioService {
 				expedientIds);
 	}
 	
+	@Override
+	@Transactional
+	public void refrescarRemesa(Long remesaId) throws Exception {
+		Remesa remesa = remesaRepository.findOne(remesaId);
+		
+		if (remesa.getEstat() == DocumentEnviamentEstatEnumDto.ENVIAT)
+			notificacioHelper.comprovarRemesaEnviada(remesa);
+		else if (remesa.getEstat() == DocumentEnviamentEstatEnumDto.VALIDAT)
+			notificacioHelper.comprovarRemesaValidada(remesa);
+	}
 }

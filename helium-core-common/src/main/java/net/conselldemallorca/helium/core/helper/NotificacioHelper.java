@@ -17,14 +17,12 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Component;
 
-import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
 
 import net.conselldemallorca.helium.core.model.hibernate.DocumentStore;
 import net.conselldemallorca.helium.core.model.hibernate.Expedient;
@@ -63,6 +61,8 @@ public class NotificacioHelper {
 	private ConversioTipusHelper conversioTipusHelper;
 	@Resource
 	private PluginHelper pluginHelper;
+	@Resource
+	private SftpClientHelper sftpClientHelper;
 	@Resource
 	private ExpedientTipusRepository expedientTipusRepository;
 	@Resource
@@ -150,9 +150,9 @@ public class NotificacioHelper {
 		String codiClient = fragmentFitxer(expedientTipus.getSicerClientCodi(), 8, false);
 		String codiRemesa = fragmentFitxer(remesaCodi, 4, false);
 		
-		Date dataFitxer = new Date();
+		Date dataFitxerEnviament = new Date();
 	    Calendar fitxerData = Calendar.getInstance();
-	    fitxerData.setTime(dataFitxer);
+	    fitxerData.setTime(dataFitxerEnviament);
 	    String fitxerAnyMesDia = anyMesDiaData(fitxerData);
 		
 		String nomFitxer = 
@@ -254,16 +254,25 @@ public class NotificacioHelper {
 		fitxer.close();
 		
 		/**enviem el fitxer i creem la remesa**/
-		boolean fitxerEnviat = enviamentFitxerSftpSicer(file);
+		String errorEnviant = null;
+		boolean fitxerEnviat = false;
 		
-		Date dataEnviament = new Date();
+		try {
+			enviamentFitxerSftpSicer(file);
+			fitxerEnviat = true;
+		} catch(Exception ex) {
+			errorEnviant = ExceptionUtils.getRootCauseMessage(ex);
+		}
+		
 		
 		Remesa remesa = remesaRepository.findByCodiAndExpedientTipus(codiRemesa, expedientTipus);
 		
 		if (remesa == null) {
 			remesa = new Remesa();
 			remesa.setCodi(codiRemesa);
-			remesa.setDataCreacio(dataEnviament);
+			remesa.setProducteCodi(expedientTipus.getSicerProducteCodi());
+			remesa.setClientCodi(expedientTipus.getSicerClientCodi());
+			remesa.setDataCreacio(dataFitxerEnviament);
 			remesa.setDataEmisio(dataEmisio);
 			remesa.setDataPrevistaDeposit(dataPrevistaDeposit);
 			remesa.setExpedientTipus(expedientTipus);
@@ -274,125 +283,189 @@ public class NotificacioHelper {
 		} else {
 			remesa.setEstat(DocumentEnviamentEstatEnumDto.ENVIAT_ERROR);
 		}
-		remesa.setDataEnviament(dataEnviament);
+		remesa.setDataEnviament(dataFitxerEnviament);
 		
 		remesaRepository.save(remesa);
 		/********************/
+		countDetalls = 0;
 		for (Notificacio notificacio: notificacionsPerEnviar) {
-			
 			notificacio.setRemesa(remesa);
+			notificacio.setRegistreNumero((codiRemesa + String.format("%05d", countDetalls)));
 			if (fitxerEnviat) {
-				notificacio.setDataEnviament(dataEnviament);
+				notificacio.setDataEnviament(dataFitxerEnviament);
 				notificacio.setEstat(DocumentEnviamentEstatEnumDto.ENVIAT);
+				notificacio.setError(null);
 			} else {
 				notificacio.setEstat(DocumentEnviamentEstatEnumDto.ENVIAT_ERROR);
+				notificacio.setError("No s'ha pogut enviar el fitxer al SICER: " + errorEnviant );
 			}
+			countDetalls++;
 		}		
 	}
 	
 	public void comprovarRemesaEnviada(Remesa remesa) {
-		String nomFitxer = "";
-		BufferedReader br = obtenirFitxerSftpSicer(nomFitxer);
+	    Calendar fitxerData = Calendar.getInstance();
+	    fitxerData.setTime(remesa.getDataEnviament());
+	    String fitxerAnyMesDia = anyMesDiaData(fitxerData);
 		
+		String nomFitxer = 
+				remesa.getProducteCodi() + 
+				remesa.getClientCodi() + 
+				fitxerAnyMesDia +
+				"." +
+				fragmentFitxer(fitxerData.get(Calendar.HOUR_OF_DAY), 2, true) + fragmentFitxer(fitxerData.get(Calendar.MINUTE), 2, true) + 
+				"-resultado.txt";
+		
+		BufferedReader br = obtenirFitxerSftpSicer("/home/limit/sftp-proves/Respostes", nomFitxer);
+		DocumentEnviamentEstatEnumDto estatRemesa = remesa.getEstat();
 		String sCurrentLine;
-		try {
-			while ((sCurrentLine = br.readLine()) != null) {
-				System.out.println(sCurrentLine);
+		boolean remesaCorrecte = false;
+		String errorValidacio = null;
+		if (br != null) {
+			try {
+				String firstLine = br.readLine();
+				remesaCorrecte = "Si".equalsIgnoreCase(firstLine.substring(11,13));
+				if (remesaCorrecte) {
+					while ((sCurrentLine = br.readLine()) != null) {
+						System.out.println(sCurrentLine);
+					}
+					estatRemesa = DocumentEnviamentEstatEnumDto.VALIDAT;
+				} else {
+					estatRemesa = DocumentEnviamentEstatEnumDto.VALIDAT_ERROR;
+					errorValidacio = "ERROR VALIDACIO, FITXER INCORRECTE: ";
+				}
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				sftpClientHelper.closeConnection();
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+			
+			if (!remesaCorrecte)
+				errorValidacio += obtenirErrorValidacio(remesa);
+			
+			actualitzarEstatRemesa(remesa, estatRemesa, errorValidacio);
+		} else {
+			sftpClientHelper.closeConnection();
 		}
 	}
 	
 	public void comprovarRemesaValidada(Remesa remesa) {
+		Calendar fitxerData = Calendar.getInstance();
+	    fitxerData.setTime(remesa.getDataEnviament());
+	    String fitxerAnyMesDia = anyMesDiaData(fitxerData);
+		
+		String nomFitxer = 
+				remesa.getProducteCodi() + 
+				remesa.getClientCodi() + 
+				fitxerAnyMesDia +
+				"." +
+				fragmentFitxer(fitxerData.get(Calendar.HOUR_OF_DAY), 2, true) + fragmentFitxer(fitxerData.get(Calendar.MINUTE), 2, true);
+		
+		BufferedReader br = obtenirFitxerSftpSicer("/home/limit/sftp-proves/Entregues", nomFitxer);
+		String sCurrentLine;
+		if (br != null) {
+			try {
+				while ((sCurrentLine = br.readLine()) != null) {
+					if ("D".equalsIgnoreCase(sCurrentLine.substring(0, 1))) {
+						String registreNumero = sCurrentLine.substring(16, 25);
+						Notificacio notificacioValidada = notificacioRepository.findByRemesaAndRegistreNumero(remesa, registreNumero);
+						
+						String codiSituacio =  sCurrentLine.substring(25, 27);
+						if ("01".equalsIgnoreCase(codiSituacio)) {
+							notificacioValidada.setEstat(DocumentEnviamentEstatEnumDto.PROCESSAT_OK);
+						} else {
+							notificacioValidada.setEstat(DocumentEnviamentEstatEnumDto.PROCESSAT_OK);
+						}
+					}
+				}
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				sftpClientHelper.closeConnection();
+			}
+			
+			remesa.setEstat(DocumentEnviamentEstatEnumDto.PROCESSAT_OK);
+		} else {
+			sftpClientHelper.closeConnection();
+		}
 		
 	}
 	
 	
-	@SuppressWarnings("null")
-	private boolean enviamentFitxerSftpSicer(File fitxer) {
-		boolean enviat = false;
-        String SFTPWORKINGDIR = "/home/limit/sftp-proves/";
+	private void enviamentFitxerSftpSicer(File fitxer) throws Exception {
+        String SFTPWORKINGDIR = "/home/limit/sftp-proves";
 
-        Session session = null;
-        Channel channel = null;
-        ChannelSftp channelSftp = null;
-        openSftpConnection(session, channel, channelSftp);
         try {
+        	ChannelSftp channelSftp = sftpClientHelper.openSicerSftpConnection();
+       
             channelSftp.cd(SFTPWORKINGDIR);
             channelSftp.put(new FileInputStream(fitxer), fitxer.getName());
             System.out.println("File transfered successfully to host.");
-            enviat = true;
         } catch (Exception ex) {
-             System.out.println("Exception found while tranfer the response.");
-             ex.printStackTrace();
+            throw ex;
         }
         finally{
-            closeSftpConnection(session, channel, channelSftp);
+        	sftpClientHelper.closeConnection();
         }
-        return enviat;
 	}
 	
-	@SuppressWarnings("null")
-	private BufferedReader obtenirFitxerSftpSicer(String fileName) {
-		String SFTPWORKINGDIR = "/home/limit/sftp-proves/";
-
-        Session session = null;
-        Channel channel = null;
-        ChannelSftp channelSftp = null;
-        openSftpConnection(session, channel, channelSftp);
-        BufferedReader br = null;
-        try {
+	private BufferedReader obtenirFitxerSftpSicer(String path, String fileName) {
+		BufferedReader br = null;
+		try {
+			String SFTPWORKINGDIR = path;
+			ChannelSftp channelSftp = sftpClientHelper.openSicerSftpConnection();
+       
             channelSftp.cd(SFTPWORKINGDIR);
             InputStream stream = channelSftp.get(fileName);
             br = new BufferedReader(new InputStreamReader(stream));
         } catch (Exception ex) {
-             System.out.println("Exception found while tranfer the response.");
-             ex.printStackTrace();
-        }
-        finally{
-            closeSftpConnection(session, channel, channelSftp);
+            System.out.println("Exception found while tranfer the response.");
+            ex.printStackTrace();
+            sftpClientHelper.closeConnection();
         }
         return br;
 	}
 	
-	private void openSftpConnection(Session session, Channel channel, ChannelSftp channelSftp) {
+	private String obtenirErrorValidacio(Remesa remesa) {
+		Calendar fitxerData = Calendar.getInstance();
+	    fitxerData.setTime(remesa.getDataEnviament());
+	    String fitxerAnyMesDia = anyMesDiaData(fitxerData);
 		
-		String SFTPHOST = "10.35.3.243";
-        int SFTPPORT = 22;
-        String SFTPUSER = "limit";
-        String SFTPPASS = "tecnologies";
-
-        System.out.println("preparing the host information for sftp.");
-        try {
-            JSch jsch = new JSch();
-            session = jsch.getSession(SFTPUSER, SFTPHOST, SFTPPORT);
-            session.setPassword(SFTPPASS);
-            java.util.Properties config = new java.util.Properties();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
-            session.connect();
-            System.out.println("Host connected.");
-            channel = session.openChannel("sftp");
-            channel.connect();
-            System.out.println("sftp channel opened and connected.");
-            channelSftp = (ChannelSftp) channel;
-        } catch (Exception ex) {
-             System.out.println("Exception found while tranfer the response.");
-             ex.printStackTrace();
-        }
+		String nomFitxer = 
+				remesa.getProducteCodi() + 
+				remesa.getClientCodi() + 
+				fitxerAnyMesDia +
+				"." +
+				fragmentFitxer(fitxerData.get(Calendar.HOUR_OF_DAY), 2, true) + fragmentFitxer(fitxerData.get(Calendar.MINUTE), 2, true) + 
+				".1.bad";
+		
+		String texteError = "";
+		
+		BufferedReader br = obtenirFitxerSftpSicer("/home/limit/sftp-proves/Respostes", nomFitxer);
+		String sCurrentLine;
+		if (br != null) {
+			try {
+				while ((sCurrentLine = br.readLine()) != null) {
+					if ("D".equalsIgnoreCase(sCurrentLine.substring(0, 1))) {
+						texteError += "Error " + sCurrentLine.substring(1, 6) + ":";
+						texteError += " " + sCurrentLine.substring(6, 321);
+						texteError += "\n";
+					}
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				sftpClientHelper.closeConnection();
+			}
+			
+		} else {
+			sftpClientHelper.closeConnection();
+		}
+		
+		return texteError;
 	}
-	
-	private void closeSftpConnection(Session session, Channel channel, ChannelSftp channelSftp) {
-		channelSftp.exit();
-        System.out.println("sftp Channel exited.");
-        channel.disconnect();
-        System.out.println("Channel disconnected.");
-        session.disconnect();
-        System.out.println("Host Session disconnected.");
-	}
-	
-	
 	
 	private String fragmentFitxer(Object value, int maxLength, boolean isNumeric) {
 		if (String.valueOf(value).length() > maxLength) {
@@ -407,10 +480,21 @@ public class NotificacioHelper {
 		}
 		return String.valueOf(value);
 	}
+
+	private void actualitzarEstatRemesa(Remesa remesa, DocumentEnviamentEstatEnumDto estat, String error) {
+		remesa.setEstat(estat);
+		List<Notificacio> notificacionsPerValidar = notificacioRepository.findByRemesa(remesa);
+		for (Notificacio notificacioPerValidar: notificacionsPerValidar) {
+			notificacioPerValidar.setEstat(estat);
+			notificacioPerValidar.setError(null);
+			if (estat == DocumentEnviamentEstatEnumDto.VALIDAT_ERROR)
+				notificacioPerValidar.setError(error);
+		}
+	}
 	
 	private String anyMesDiaData(Calendar data) {
 		return fragmentFitxer(data.get(Calendar.YEAR), 4, true) + fragmentFitxer((data.get(Calendar.MONTH) + 1), 2, true) + fragmentFitxer(data.get(Calendar.DAY_OF_MONTH), 2, true);
 	}
-
+	
 	private static final Log logger = LogFactory.getLog(NotificacioHelper.class);
 }

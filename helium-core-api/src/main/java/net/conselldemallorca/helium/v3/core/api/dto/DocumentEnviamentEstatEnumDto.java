@@ -19,5 +19,6 @@ public enum DocumentEnviamentEstatEnumDto {
 	ENTREGAT,
 	REBUTJAT,
 	PENDENT,
-	VALIDAT
+	VALIDAT,
+	VALIDAT_ERROR
 }

@@ -25,4 +25,5 @@ public interface NotificacioRepository extends JpaRepository<Notificacio, Long> 
 	List<Notificacio> findByEstatAndTipusOrderByDataEnviamentAsc(DocumentEnviamentEstatEnumDto estat,  DocumentNotificacioTipusEnumDto tipus);
 	Notificacio findByRegistreNumeroAndRdsCodiAndRdsClau(String registreNumero, Long rdsCodi, String rdsClau);
 	List<Notificacio> findByRemesa(Remesa remesa);
+	Notificacio findByRemesaAndRegistreNumero(Remesa remesa, String registreNumero);
 }

@@ -22,6 +22,7 @@ import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.ForeignKey;
+import org.springmodules.validation.bean.conf.loader.annotation.handler.MaxLength;
 
 import net.conselldemallorca.helium.v3.core.api.dto.DocumentEnviamentEstatEnumDto;
 
@@ -48,6 +49,12 @@ public class Remesa implements Serializable, GenericEntity<Long> {
 	@Column(name = "estat", nullable = false)
 	@Enumerated(EnumType.STRING)
 	private DocumentEnviamentEstatEnumDto estat;
+	@MaxLength(2)
+	@Column(name = "producte_codi", nullable = false)
+	private String producteCodi;
+	@MaxLength(8)
+	@Column(name = "client_codi", nullable = false)
+	private String clientCodi;
 	@Column(name = "data_creacio", nullable = false)
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date dataCreacio;
@@ -119,6 +126,19 @@ public class Remesa implements Serializable, GenericEntity<Long> {
 	}
 	public void setExpedientTipus(ExpedientTipus expedientTipus) {
 		this.expedientTipus = expedientTipus;
+	}
+
+	public String getProducteCodi() {
+		return producteCodi;
+	}
+	public void setProducteCodi(String producteCodi) {
+		this.producteCodi = producteCodi;
+	}
+	public String getClientCodi() {
+		return clientCodi;
+	}
+	public void setClientCodi(String clientCodi) {
+		this.clientCodi = clientCodi;
 	}
 
 	private static final long serialVersionUID = 1L;

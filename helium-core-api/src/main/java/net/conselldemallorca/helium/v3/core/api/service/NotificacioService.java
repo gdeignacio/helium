@@ -6,5 +6,8 @@ public interface NotificacioService {
 	
 	public void reenviarRemesa(
 			Long remesaId, 
-			Long expedientTipusId)  throws NoTrobatException, Exception;
+			Long expedientTipusId) throws NoTrobatException, Exception;
+	
+	public void refrescarRemesa(
+			Long remesaId) throws NoTrobatException, Exception;
 }

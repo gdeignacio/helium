@@ -17,6 +17,8 @@ public class RemesaDto implements Serializable {
 	private Long id;
 	private String codi;
 	private DocumentEnviamentEstatEnumDto estat;
+	private String producteCodi;
+	private String clientCodi;
 	private Date dataCreacio;
 	private Date dataEnviament;
 	private Date dataEmisio;
@@ -72,5 +74,18 @@ public class RemesaDto implements Serializable {
 		this.dataPrevistaDeposit = dataPrevistaDeposit;
 	}
 	
+	public String getProducteCodi() {
+		return producteCodi;
+	}
+	public void setProducteCodi(String producteCodi) {
+		this.producteCodi = producteCodi;
+	}
+	public String getClientCodi() {
+		return clientCodi;
+	}
+	public void setClientCodi(String clientCodi) {
+		this.clientCodi = clientCodi;
+	}
+
 	private static final long serialVersionUID = 1L;
 }

@@ -110,26 +110,29 @@
 					    <td>${notificacioSicer.assumpte}</td>
 						<td>
 							<c:choose>
-								<c:when test="${notificacioSicer.remesa.estat == 'PENDENT'}">
+								<c:when test="${notificacioSicer.estat == 'PENDENT'}">
 									<span class="label label-default"><spring:message code="expedient.notificacio.estat.pendent"/></span>
 								</c:when>
-								<c:when test="${notificacioSicer.remesa.estat == 'ENVIAT'}">
+								<c:when test="${notificacioSicer.estat == 'ENVIAT'}">
 									<span class="label label-warning"><spring:message code="expedient.notificacio.estat.enviat"/></span>
 								</c:when>
-								<c:when test="${notificacioSicer.remesa.estat == 'VALIDAT'}">
+								<c:when test="${notificacioSicer.estat == 'VALIDAT'}">
 									<span class="label label-info"><spring:message code="expedient.notificacio.estat.validat"/></span>
 								</c:when>
-								<c:when test="${notificacioSicer.remesa.estat == 'PROCESSAT_OK'}">
+								<c:when test="${notificacioSicer.estat == 'PROCESSAT_OK'}">
 									<span class="label label-success"><spring:message code="expedient.notificacio.estat.processat_ok"/></span>
 								</c:when>
-								<c:when test="${notificacioSicer.remesa.estat == 'PROCESSAT_REBUTJAT'}">
+								<c:when test="${notificacioSicer.estat == 'PROCESSAT_REBUTJAT'}">
 									<a class="notificacioError" data-rdt-link-modal="true" href="<c:url value="../../v3/expedient/${expedient.id}/notificacio/${notificacioSicer.id}/error"/>" data-toggle="tooltip" title="<spring:message code="expedient.notificacio.mostrar_error"/>"><span class="label label-danger"><spring:message code="expedient.notificacio.estat.processat_rebutjat"/></span></a>
 								</c:when>
-								<c:when test="${notificacioSicer.remesa.estat == 'PROCESSAT_ERROR'}">
+								<c:when test="${notificacioSicer.estat == 'PROCESSAT_ERROR'}">
 									<a class="notificacioError" data-rdt-link-modal="true" href="<c:url value="../../v3/expedient/${expedient.id}/notificacio/${notificacioSicer.id}/error"/>" data-toggle="tooltip" title="<spring:message code="expedient.notificacio.mostrar_error"/>"><span class="label label-danger"><spring:message code="expedient.notificacio.estat.processat_error"/></span></a>
 								</c:when>
-								<c:when test="${notificacioSicer.remesa.estat == 'ENVIAT_ERROR'}">
+								<c:when test="${notificacioSicer.estat == 'ENVIAT_ERROR'}">
 									<a class="notificacioError" data-rdt-link-modal="true" href="<c:url value="../../v3/expedient/${expedient.id}/notificacio/${notificacioSicer.id}/error"/>" data-toggle="tooltip" title="<spring:message code="expedient.notificacio.mostrar_error"/>"><span class="label label-danger"><spring:message code="expedient.notificacio.estat.enviat.error"/></span></a>
+								</c:when>
+								<c:when test="${notificacioSicer.estat == 'VALIDAT_ERROR'}">
+									<a class="notificacioError" data-rdt-link-modal="true" href="<c:url value="../../v3/expedient/${expedient.id}/notificacio/${notificacioSicer.id}/error"/>" data-toggle="tooltip" title="<spring:message code="expedient.notificacio.mostrar_error"/>"><span class="label label-danger"><spring:message code="expedient.notificacio.estat.validat.error"/></span></a>
 								</c:when>
 								<c:otherwise>
 									<span class="label label-default">${notificacioSicer.estat}</span>
@@ -152,8 +155,11 @@
 	 							<button class="btn btn-primary" data-toggle="dropdown"><span class="fa fa-cog"></span>&nbsp;<spring:message code="comu.boto.accions"/>&nbsp;<span class="caret"></span></button>
 								<ul class="dropdown-menu dropdown-menu-right">
 									<li><a class="notificacioInfo" data-rdt-link-modal="true" data-rdt-link-modal-maximize="true" href="<c:url value="../../v3/expedient/${expedient.id}/notificacio/${notificacioSicer.id}/info"/>"><span class="fa fa-file"></span> <spring:message code="expedient.notificacio.info"/></a></li>
-									<c:if test="${not empty notificacioSicer.remesa && notificacioSicer.remesa.estat == 'ENVIAT_ERROR'}">
-										<li><a href="<c:url value="/v3/expedient/${expedient.id}/notificacio/${notificacioSicer.id}/remesa/${notificacioSicer.remesa.id}/reenviar"/>"><span class="fa fa-refresh"></span> <spring:message code="expedient.notificacio.sicer.reenviar"/></a></li>
+									<c:if test="${not empty notificacioSicer.remesa && (notificacioSicer.remesa.estat == 'ENVIAT_ERROR' || notificacioSicer.remesa.estat == 'VALIDAT_ERROR')}">
+										<li><a href="<c:url value="/v3/expedient/${expedient.id}/notificacio/${notificacioSicer.id}/remesa/${notificacioSicer.remesa.id}/reenviar"/>"><span class="fa fa-share-square-o"></span> <spring:message code="expedient.notificacio.sicer.reenviar"/></a></li>
+									</c:if>
+									<c:if test="${not empty notificacioSicer.remesa && (notificacioSicer.remesa.estat == 'VALIDAT' || notificacioSicer.remesa.estat == 'ENVIAT')}">
+										<li><a href="<c:url value="/v3/expedient/${expedient.id}/notificacio/${notificacioSicer.id}/remesa/${notificacioSicer.remesa.id}/refrescar"/>"><span class="fa fa-refresh"></span> <spring:message code="expedient.notificacio.sicer.refrescar"/></a></li>
 									</c:if>
 	 							</ul>
  							</div>
