@@ -335,6 +335,7 @@ public class ExpedientTipusController extends BaseExpedientTipusController {
 		command.setEntornId(entornActual.getId());
 		command.setIntegracioSistra(true);
 		command.setIntegracioForms(true);
+		command.setIntegracioSicer(true);
 		model.addAttribute("inici", true); // per marcar tots els checboxs inicialment
 		model.addAttribute("expedientTipus", dto);
 		model.addAttribute("command", command);
@@ -456,6 +457,7 @@ public class ExpedientTipusController extends BaseExpedientTipusController {
 		}
 		command.setIntegracioSistra(true);
 		command.setIntegracioForms(true);
+		command.setIntegracioSicer(true);
 		model.addAttribute("inici", true); // per marcar tots els checboxs inicialment
 		model.addAttribute("command", command);	
 	 	EntornDto entornActual = SessionHelper.getSessionManager(request).getEntornActual();
