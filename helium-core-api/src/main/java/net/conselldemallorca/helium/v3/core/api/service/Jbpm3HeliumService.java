@@ -42,6 +42,7 @@ import net.conselldemallorca.helium.v3.core.api.exception.NoTrobatException;
 import net.conselldemallorca.helium.v3.core.api.exception.SistemaExternException;
 import net.conselldemallorca.helium.v3.core.api.exception.TramitacioException;
 import net.conselldemallorca.helium.v3.core.api.exception.ValidacioException;
+import net.conselldemallorca.helium.v3.core.api.registre.RegistreAnotacio;
 
 
 /**
@@ -725,6 +726,16 @@ public interface Jbpm3HeliumService {
 	 */
 	public RegistreIdDto registreAnotacioSortida(
 			RegistreAnotacioDto anotacio,
+			Long expedientId) throws SistemaExternException, NoTrobatException;
+	
+	/**
+	 * 
+	 * @param anotacio
+	 * @return
+	 * @throws PluginException
+	 */
+	public RegistreIdDto registreAnotacioSortida(
+			RegistreAnotacio anotacio,
 			Long expedientId) throws SistemaExternException, NoTrobatException;
 
 	/**

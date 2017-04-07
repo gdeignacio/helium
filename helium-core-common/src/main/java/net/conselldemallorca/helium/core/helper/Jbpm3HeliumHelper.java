@@ -90,6 +90,7 @@ import net.conselldemallorca.helium.v3.core.api.dto.ZonaperEventDto;
 import net.conselldemallorca.helium.v3.core.api.dto.ZonaperExpedientDto;
 import net.conselldemallorca.helium.v3.core.api.exception.NoTrobatException;
 import net.conselldemallorca.helium.v3.core.api.exception.SistemaExternException;
+import net.conselldemallorca.helium.v3.core.api.registre.RegistreAnotacio;
 import net.conselldemallorca.helium.v3.core.api.service.Jbpm3HeliumService;
 import net.conselldemallorca.helium.v3.core.repository.AlertaRepository;
 import net.conselldemallorca.helium.v3.core.repository.AreaRepository;
@@ -1991,6 +1992,22 @@ public class Jbpm3HeliumHelper implements Jbpm3HeliumService {
 					definicioProcesRepository.findByJbpmId(pd.getId()),
 					DefinicioProcesDto.class));
 		}
+		return resposta;
+	}
+
+	@Override
+	public RegistreIdDto registreAnotacioSortida(RegistreAnotacio anotacio, Long expedientId) {
+		
+		Expedient expedient = expedientRepository.findOne(expedientId);
+		if (expedient == null)
+			throw new NoTrobatException(Expedient.class, expedientId);
+		
+		RegistreIdDto respostaPlugin = pluginHelper.registreAnotacioSortida(
+				anotacio,
+				expedient);
+		RegistreIdDto resposta = new RegistreIdDto();
+		resposta.setNumero(respostaPlugin.getNumero());
+		resposta.setData(respostaPlugin.getData());
 		return resposta;
 	}
 
