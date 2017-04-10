@@ -247,7 +247,10 @@ public class RegistreSortidaRegWeb3Handler extends AbstractHeliumActionHandler {
 				representantProvincia,
 				varRepresentantProvincia));
 		
-		interessat.setRepresentant(representant);
+		if (representant.getTipus() != null && !representant.getTipus().isEmpty() && !("".equalsIgnoreCase(representant.getTipus())))
+			interessat.setRepresentant(representant);
+		else
+			interessat.setRepresentant(null);
 		
 		List<RegistreInteressat> interessats = new ArrayList<RegistreInteressat>();
 		interessats.add(interessat);
@@ -295,38 +298,6 @@ public class RegistreSortidaRegWeb3Handler extends AbstractHeliumActionHandler {
 			ExecutionContext executionContext,
 			RegistreAnotacio anotacio,
 			List<DocumentInfo> documentsSortida) {
-		
-//		RegistreAnotacioRegWeb3Dto anotacio = new RegistreAnotacioRegWeb3Dto();
-		
-//		anotacio.setOrganOrigen(dadesSortida.getOrganOrigen());
-//		anotacio.setOficina(dadesSortida.getOficina());
-//		anotacio.setLlibre(dadesSortida.getLlibre());
-//		anotacio.setExtracte(dadesSortida.getExtracte());
-//		anotacio.setDocumentacioFisicaCodi(dadesSortida.getDocumentacioFisicaCodi());
-//		anotacio.setTipoAsunto(dadesSortida.getTipoAsunto());
-//		anotacio.setCodiUsuari(dadesSortida.getCodiUsuari());
-//		anotacio.setContacteUsuari(dadesSortida.getContacteUsuari());
-//		anotacio.setNumExpedient(dadesSortida.getNumExpedient());
-//
-//		anotacio.setInteressatTipus(dadesSortida.getInteressatTipus());
-//		anotacio.setInteressatTipusDocument(dadesSortida.getInteressatTipusDocument());
-//		anotacio.setInteressatDocument(dadesSortida.getInteressatDocument());
-//		anotacio.setInteressatEmail(dadesSortida.getInteressatEmail());
-//		anotacio.setInteressatNom(dadesSortida.getInteressatNom());
-//		anotacio.setInteressatLlinatge1(dadesSortida.getInteressatLlinatge1());
-//		anotacio.setInteressatLlinatge2(dadesSortida.getInteressatLlinatge2());
-//		anotacio.setInteressatPaisCodi(dadesSortida.getInteressatPaisCodi());
-//		anotacio.setInteressatProvincia(dadesSortida.getInteressatProvincia());
-//		
-//		anotacio.setRepresentantTipus(dadesSortida.getRepresentantTipus());
-//		anotacio.setRepresentantTipusDocument(dadesSortida.getRepresentantTipusDocument());
-//		anotacio.setRepresentantDocument(dadesSortida.getRepresentantDocument());
-//		anotacio.setRepresentantEmail(dadesSortida.getRepresentantEmail());
-//		anotacio.setRepresentantNom(dadesSortida.getRepresentantNom());
-//		anotacio.setRepresentantLlinatge1(dadesSortida.getRepresentantLlinatge1());
-//		anotacio.setRepresentantLlinatge2(dadesSortida.getRepresentantLlinatge2());
-//		anotacio.setRepresentantPaisCodi(dadesSortida.getRepresentantPaisCodi());
-//		anotacio.setRepresentantProvincia(dadesSortida.getRepresentantProvincia());
 		
 		List<RegistreAnnex> annexos = new ArrayList<RegistreAnnex>();
 		for (DocumentInfo document: documentsSortida) {

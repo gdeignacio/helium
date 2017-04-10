@@ -3,7 +3,6 @@
  */
 package net.conselldemallorca.helium.core.helper;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -12,7 +11,6 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1181,7 +1179,7 @@ public class PluginHelper {
 		}
 	}
 	public boolean registreIsPluginActiu() {
-		return getRegistrePlugin() != null;
+		return getRegistrePluginRebWeb3() != null;
 	}
 
 	public String gestioDocumentalCreateDocument(
@@ -2081,10 +2079,14 @@ public class PluginHelper {
 		registreAssentament.setObservacions(anotacio.getObservacions());
 		registreAssentament.setExposa(anotacio.getExposa());
 		registreAssentament.setSolicita(anotacio.getSolicita());
+		
+		List<RegistreAssentamentInteressat> interessats = new ArrayList<RegistreAssentamentInteressat>();
 
 		for (RegistreInteressat regInt: anotacio.getInteressats()) {
-			registreAssentament.getInteressats().add(toRegistreAssentamentInteressat(regInt));
+			interessats.add(toRegistreAssentamentInteressat(regInt));
 		}
+		
+		registreAssentament.setInteressats(interessats);
 		
 		if (anotacio.getAnnexos() != null) {
 			List<DocumentRegistre> documents = new ArrayList<DocumentRegistre>();
@@ -2105,10 +2107,27 @@ public class PluginHelper {
 	private RegistreAssentamentInteressat toRegistreAssentamentInteressat(RegistreInteressat interessat) {
 		RegistreAssentamentInteressat registreAssentamentInteressat = new RegistreAssentamentInteressat();
 		
-		try {
-			BeanUtils.copyProperties(registreAssentamentInteressat, interessat);
-		} catch (IllegalAccessException e) {
-		} catch (InvocationTargetException e) {
+		registreAssentamentInteressat.setTipus(interessat.getTipus());
+		registreAssentamentInteressat.setDocumentTipus(interessat.getDocumentTipus());
+		registreAssentamentInteressat.setDocumentNum(interessat.getDocumentNum());
+		registreAssentamentInteressat.setNom(interessat.getNom());
+		registreAssentamentInteressat.setLlinatge1(interessat.getLlinatge1());
+		registreAssentamentInteressat.setLlinatge2(interessat.getLlinatge2());
+		registreAssentamentInteressat.setRaoSocial(interessat.getRaoSocial());
+		registreAssentamentInteressat.setPais(interessat.getPais());
+		registreAssentamentInteressat.setProvincia(interessat.getProvincia());
+		registreAssentamentInteressat.setMunicipi(interessat.getMunicipi());
+		registreAssentamentInteressat.setAdresa(interessat.getAdresa());
+		registreAssentamentInteressat.setCodiPostal(interessat.getCodiPostal());
+		registreAssentamentInteressat.setEmail(interessat.getEmail());
+		registreAssentamentInteressat.setTelefon(interessat.getTelefon());
+		registreAssentamentInteressat.setEmailHabilitat(interessat.getEmailHabilitat());
+		registreAssentamentInteressat.setCanalPreferent(interessat.getCanalPreferent());
+		registreAssentamentInteressat.setObservacions(interessat.getObservacions());
+		registreAssentamentInteressat.setTipus(interessat.getTipus());
+		
+		if (interessat.getRepresentant() != null) {
+			registreAssentamentInteressat.setRepresentant(toRegistreAssentamentInteressat(interessat.getRepresentant()));
 		}
 		
 		return registreAssentamentInteressat;

@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.junit.BeforeClass;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -35,7 +36,7 @@ import net.conselldemallorca.helium.v3.core.api.registre.RegistreInteressatTipus
  * @author Limit Tecnologies <limit@limit.es>
  */
 
-public class RegistrePluginRegweb3 implements RegistrePluginRegWeb3 {
+public class RegistrePluginRegweb3 extends RegWeb3Utils implements RegistrePluginRegWeb3{
 	
 	protected static RegWebRegistroEntradaWs registroEntradaApi;
 	protected static RegWebRegistroSalidaWs registroSalidaApi;
@@ -43,6 +44,10 @@ public class RegistrePluginRegweb3 implements RegistrePluginRegWeb3 {
 	private static final String SEPARADOR_ENTITAT = "-";
 	private static final String SEPARADOR_NUMERO = "/";
 
+	@BeforeClass
+    public static void setUpBeforeClass() throws Exception {
+        registroSalidaApi = getRegistroSalidaApi();
+    }
 
 	public RespostaAnotacioRegistre registrarSortida(
 			RegistreAssentament registreSortida) throws RegistrePluginException {
