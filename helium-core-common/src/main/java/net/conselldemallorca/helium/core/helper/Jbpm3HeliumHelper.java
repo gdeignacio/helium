@@ -2010,5 +2010,21 @@ public class Jbpm3HeliumHelper implements Jbpm3HeliumService {
 		resposta.setData(respostaPlugin.getData());
 		return resposta;
 	}
+	
+//	@Override
+//	public RegistreIdDto obtenirRegistreSortida(RegistreAnotacio anotacio, Long expedientId) {
+//		
+//		Expedient expedient = expedientRepository.findOne(expedientId);
+//		if (expedient == null)
+//			throw new NoTrobatException(Expedient.class, expedientId);
+//		
+//		RegistreIdDto respostaPlugin = pluginHelper.registreAnotacioSortida(
+//				anotacio,
+//				expedient);
+//		RegistreIdDto resposta = new RegistreIdDto();
+//		resposta.setNumero(respostaPlugin.getNumero());
+//		resposta.setData(respostaPlugin.getData());
+//		return resposta;
+//	}
 
 }

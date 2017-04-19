@@ -1,10 +1,14 @@
 package net.conselldemallorca.helium.integracio.plugins.registre;
 
+import java.io.File;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
+import javax.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,6 +20,7 @@ import es.caib.regweb.ws.model.ListaResultados;
 import es.caib.regweb.ws.model.ParametrosRegistroSalidaWS;
 import es.caib.regweb.ws.services.regwebfacade.RegwebFacadeServiceLocator;
 import es.caib.regweb.ws.services.regwebfacade.RegwebFacade_PortType;
+import es.caib.regweb3.ws.api.v3.AnexoWs;
 import es.caib.regweb3.ws.api.v3.DatosInteresadoWs;
 import es.caib.regweb3.ws.api.v3.IdentificadorWs;
 import es.caib.regweb3.ws.api.v3.InteresadoWs;
@@ -112,20 +117,49 @@ public class RegistrePluginRegweb3 extends RegWeb3Utils implements RegistrePlugi
             
             registroSalidaWs.getInteresados().add(interesadoWs);
         }
+        
+        for (DocumentRegistre document: registreSortida.getDocuments()) {
+        	AnexoWs anexoWs = new AnexoWs();
+        	
+        	anexoWs.setTitulo(document.getNom());
+            anexoWs.setTipoDocumental("TD01");
+            anexoWs.setTipoDocumento("02");
+            anexoWs.setOrigenCiudadanoAdmin(ANEXO_ORIGEN_CIUDADANO.intValue());
+            anexoWs.setObservaciones("Observaciones de Marilen");
+            anexoWs.setModoFirma(MODO_FIRMA_ANEXO_SINFIRMA);
+
+            // Fichero Anexado
+            MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
+            
+            anexoWs.setFicheroAnexado(document.getArxiuContingut());
+            anexoWs.setNombreFicheroAnexado(document.getArxiuNom());
+            anexoWs.setFechaCaptura(new Timestamp(document.getData().getTime()));
+            
+            anexoWs.setTipoMIMEFicheroAnexado("pdf");
+        	
+        	registroSalidaWs.getAnexos().add(anexoWs);
+        }
 
        
+        RespostaAnotacioRegistre resposta = null;
         try {
+        	registroSalidaApi = getRegistroSalidaApi();
             IdentificadorWs identificadorWs = registroSalidaApi.altaRegistroSalida(registroSalidaWs);
-            System.out.println("NumeroSalida: " + identificadorWs.getNumero());
-            System.out.println("Fecha: " + identificadorWs.getFecha());
+            resposta = new RespostaAnotacioRegistre();
+            resposta.setData(identificadorWs.getFecha());
+            resposta.setNumero(identificadorWs.getNumero().toString());
+            resposta.setNumeroRegistroFormateado(identificadorWs.getNumeroRegistroFormateado());
+            resposta.setErrorCodi(RespostaAnotacioRegistre.ERROR_CODI_OK);
         } catch (WsI18NException e) {
             String msg = WsClientUtils.toString(e);
             throw new RegistrePluginException("Error WsI18NException: " + msg);
         } catch (WsValidationException e) {
             String msg = WsClientUtils.toString(e);
             throw new RegistrePluginException("Error WsValidationException: " + msg);
-        }
-        return null;
+        } catch (Exception e) {
+            throw new RegistrePluginException("Error WsValidationException: " + e);
+		}
+        return resposta;
 	}
 
 	

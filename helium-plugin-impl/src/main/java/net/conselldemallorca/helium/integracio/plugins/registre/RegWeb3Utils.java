@@ -1,7 +1,5 @@
 package net.conselldemallorca.helium.integracio.plugins.registre;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
@@ -25,7 +23,7 @@ import es.caib.regweb3.ws.api.v3.RegWebRegistroEntradaWs;
 import es.caib.regweb3.ws.api.v3.RegWebRegistroEntradaWsService;
 import es.caib.regweb3.ws.api.v3.RegWebRegistroSalidaWs;
 import es.caib.regweb3.ws.api.v3.RegWebRegistroSalidaWsService;
-import es.caib.regweb3.ws.api.v3.utils.I18NUtils;
+import net.conselldemallorca.helium.core.util.GlobalProperties;
 
 /**
  * 
@@ -47,36 +45,36 @@ public abstract class RegWeb3Utils implements RegwebConstantes {
   
   private static Properties testProperties = new Properties();
   
-  static {
-    // Traduccions
-    try {
-      Class.forName(I18NUtils.class.getName());
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    }
-
-    // Propietats del Servidor
-    try {
-        System.out.println(new File(".").getAbsolutePath());
-      testProperties.load(new FileInputStream("test.properties"));
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
+//  static {
+//    // Traduccions
+//    try {
+//      Class.forName(I18NUtils.class.getName());
+//    } catch (ClassNotFoundException e) {
+//      e.printStackTrace();
+//    }
+//
+//    // Propietats del Servidor
+//    try {
+//        System.out.println(new File(".").getAbsolutePath());
+//      testProperties.load(new FileInputStream("test.properties"));
+//    } catch (Exception e) {
+//      e.printStackTrace();
+//    }
+//  }
   
  
 
   public static String getEndPoint(String api) {
-    return testProperties.getProperty("test_host") + api;
+    return GlobalProperties.getInstance().getProperty("app.registre.plugin.ws.host") + api;
   }
 
-  public static String getTestAppUserName() {
-    return testProperties.getProperty("test_usr");
+  public static String getAppUserName() {
+//    return testProperties.getProperty("test_usr");
+    return GlobalProperties.getInstance().getProperty("app.registre.plugin.ws.usuari");
   }
-  
 
-  public static String getTestAppPassword() {
-    return testProperties.getProperty("test_pwd");
+  public static String getAppPassword() {
+    return GlobalProperties.getInstance().getProperty("app.registre.plugin.ws.password");
   }
 
   public static String getTestEntidadCodigoDir3() {
@@ -152,7 +150,7 @@ public abstract class RegWeb3Utils implements RegwebConstantes {
 
     RegWebHelloWorldWithSecurityWs api = service.getRegWebHelloWorldWithSecurityWs();
 
-    configAddressUserPassword(getTestAppUserName(), getTestAppPassword(), endpoint, api);
+    configAddressUserPassword(getAppUserName(), getAppPassword(), endpoint, api);
 
     return api;
   }
@@ -166,7 +164,7 @@ public abstract class RegWeb3Utils implements RegwebConstantes {
 
     RegWebPersonasWs api = service.getRegWebPersonasWs();
 
-    configAddressUserPassword(getTestAppUserName(), getTestAppPassword(), endpoint, api);
+    configAddressUserPassword(getAppUserName(), getAppPassword(), endpoint, api);
 
     return api;
   }
@@ -179,7 +177,7 @@ public abstract class RegWeb3Utils implements RegwebConstantes {
 
         RegWebRegistroEntradaWs api = service.getRegWebRegistroEntradaWs();
 
-        configAddressUserPassword(getTestAppUserName(), getTestAppPassword(), endpoint, api);
+        configAddressUserPassword(getAppUserName(), getAppPassword(), endpoint, api);
 
         return api;
     }
@@ -192,7 +190,7 @@ public abstract class RegWeb3Utils implements RegwebConstantes {
 
         RegWebRegistroSalidaWs api = service.getRegWebRegistroSalidaWs();
 
-        configAddressUserPassword(getTestAppUserName(), getTestAppPassword(), endpoint, api);
+        configAddressUserPassword(getAppUserName(), getAppPassword(), endpoint, api);
 
         return api;
     }
@@ -205,7 +203,7 @@ public abstract class RegWeb3Utils implements RegwebConstantes {
 
         RegWebInfoWs api = service.getRegWebInfoWs();
 
-        configAddressUserPassword(getTestAppUserName(), getTestAppPassword(), endpoint, api);
+        configAddressUserPassword(getAppUserName(), getAppPassword(), endpoint, api);
 
         return api;
     }

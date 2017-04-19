@@ -48,13 +48,6 @@ public class RegistreSortidaRegWeb3Handler extends AbstractHeliumActionHandler {
 	private String assumpteCodi;
 	private String varAssumpteCodi;
 	
-	private String usuariCodi;
-	private String varUsuariCodi;
-	private String usuariNom;
-	private String varUsuariNom;
-	private String usuariContacte;
-	private String varUsuariContacte;
-	
 //	Info de l'interessat
 	private String interessatTipus;
 	private String varInteressatTipus;
@@ -153,18 +146,8 @@ public class RegistreSortidaRegWeb3Handler extends AbstractHeliumActionHandler {
 				assumpteCodi,
 				varAssumpteCodi));
 		
-		anotacio.setUsuariCodi((String)getValorOVariable(
-				executionContext,
-				usuariCodi,
-				varUsuariCodi));
-		anotacio.setUsuariNom((String)getValorOVariable(
-				executionContext,
-				usuariNom,
-				varUsuariNom));
-		anotacio.setUsuariContacte((String)getValorOVariable(
-				executionContext,
-				usuariContacte,
-				varUsuariContacte));
+//		anotacio.setUsuariCodi(Jbpm3HeliumBridge.getInstanceService().getUsuariCodiActual());
+		anotacio.setUsuariCodi("e43110511r");
 		
 		ExpedientDto expedient = getExpedientActual(executionContext);
 		anotacio.setExpedientNumero(expedient.getIdentificador());
@@ -279,9 +262,10 @@ public class RegistreSortidaRegWeb3Handler extends AbstractHeliumActionHandler {
 				resposta.getNumero(),
 				resposta.getData(),
 				anotacio.getOficinaCodi(),
-				Jbpm3HeliumBridge.getInstanceService().registreObtenirOficinaNom(
-						anotacio.getOficinaCodi(),
-						expedient.getId()),
+				null,
+//				Jbpm3HeliumBridge.getInstanceService().registreObtenirOficinaNom(
+//						anotacio.getOficinaCodi(),
+//						expedient.getId()),
 				false);
 		
 	}
@@ -386,36 +370,6 @@ public class RegistreSortidaRegWeb3Handler extends AbstractHeliumActionHandler {
 
 	public void setVarAssumpteCodi(String varAssumpteCodi) {
 		this.varAssumpteCodi = varAssumpteCodi;
-	}
-
-
-	public void setUsuariCodi(String usuariCodi) {
-		this.usuariCodi = usuariCodi;
-	}
-
-
-	public void setVarUsuariCodi(String varUsuariCodi) {
-		this.varUsuariCodi = varUsuariCodi;
-	}
-
-
-	public void setUsuariNom(String usuariNom) {
-		this.usuariNom = usuariNom;
-	}
-
-
-	public void setVarUsuariNom(String varUsuariNom) {
-		this.varUsuariNom = varUsuariNom;
-	}
-
-
-	public void setUsuariContacte(String usuariContacte) {
-		this.usuariContacte = usuariContacte;
-	}
-
-
-	public void setVarUsuariContacte(String varUsuariContacte) {
-		this.varUsuariContacte = varUsuariContacte;
 	}
 
 
